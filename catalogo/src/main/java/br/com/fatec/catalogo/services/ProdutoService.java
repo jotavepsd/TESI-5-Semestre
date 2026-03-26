@@ -4,7 +4,6 @@ import br.com.fatec.catalogo.models.ProdutoModel;
 import br.com.fatec.catalogo.repositories.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
@@ -13,22 +12,25 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository repository;
 
-    public List<ProdutoModel> listarTodos(){
-        
+    public List<ProdutoModel> listarTodos(String nome) {
+        if (nome != null && !nome.isBlank()) {
+            return repository.findByNomeContainingIgnoreCase(nome);
+        }
         return repository.findAll();
     }
 
-    public ProdutoModel buscarPorId(long id){
-        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
-    }
-
-    @Transactional
-    public void salvar(ProdutoModel produto){
+    public void salvar(ProdutoModel produto) {
+        if (repository.existsByNome(produto.getNome())) {
+            throw new IllegalArgumentException("Já existe um produto com este nome.");
+        }
         repository.save(produto);
     }
 
-    @Transactional
-    public void excluir(long id){
+    public ProdutoModel buscarPorId(long id) {
+        return repository.findById(id).orElseThrow(() -> new RuntimeException("Não encontrado"));
+    }
+
+    public void excluir(long id) {
         repository.deleteById(id);
     }
 }
