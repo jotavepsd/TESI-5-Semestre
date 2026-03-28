@@ -16,13 +16,6 @@ public class ProdutoController {
     @Autowired
     private ProdutoService service;
 
-    @GetMapping
-    public String listarProdutos(@RequestParam(name = "nome", required = false) String nome, Model model) {
-        model.addAttribute("produtos", service.listarTodos(nome));
-        model.addAttribute("nomeFiltro", nome);
-        return "lista-produtos";
-    }
-
     @GetMapping("/novo")
     public String exibirFormulario(Model model) {
         model.addAttribute("produto", new ProdutoModel());
@@ -30,9 +23,14 @@ public class ProdutoController {
     }
 
     @PostMapping("/salvar")
-    public String salvarProduto(@Valid @ModelAttribute("produto") ProdutoModel produto, BindingResult result, Model model) {
+    public String salvarProduto(@Valid @ModelAttribute("produto") ProdutoModel produto, BindingResult result) {
         if (result.hasErrors()) {
-            return "cadastro-produto";
+            return (produto.getIdProduto() == null || produto.getIdProduto() == 0) ? "cadastro-produto" : "editar-produto";
+        }
+
+        // Se o ID for 0, forçamos null para o banco gerar o próximo ID (Auto-incremento)
+        if (produto.getIdProduto() != null && produto.getIdProduto() == 0) {
+            produto.setIdProduto(null);
         }
 
         try {
@@ -41,19 +39,12 @@ public class ProdutoController {
             result.rejectValue("nome", "error.produto", e.getMessage());
             return "cadastro-produto";
         }
-
         return "redirect:/produtos";
     }
 
-    @GetMapping("/editar/{id}")
-    public String exibirEdicao(@PathVariable long id, Model model) {
-        model.addAttribute("produto", service.buscarPorId(id));
-        return "editar-produto";
-    }
-
-    @GetMapping("/excluir/{id}")
-    public String excluirProduto(@PathVariable long id) {
-        service.excluir(id);
-        return "redirect:/produtos";
+    @GetMapping
+    public String listar(@RequestParam(required = false) String nome, Model model) {
+        model.addAttribute("produtos", service.listarTodos(nome));
+        return "lista-produtos";
     }
 }

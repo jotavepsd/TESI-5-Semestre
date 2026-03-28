@@ -20,17 +20,25 @@ public class ProdutoService {
     }
 
     public void salvar(ProdutoModel produto) {
-        if (repository.existsByNome(produto.getNome())) {
+        // Busca produtos com nome similar para validar duplicidade
+        List<ProdutoModel> existentes = repository.findByNomeContainingIgnoreCase(produto.getNome());
+
+        // Se encontrar o mesmo nome em um ID diferente, bloqueia
+        boolean nomeJaExiste = existentes.stream()
+                .anyMatch(p -> p.getNome().equalsIgnoreCase(produto.getNome())
+                        && !p.getIdProduto().equals(produto.getIdProduto()));
+
+        if (nomeJaExiste) {
             throw new IllegalArgumentException("Já existe um produto com este nome.");
         }
         repository.save(produto);
     }
 
-    public ProdutoModel buscarPorId(long id) {
+    public ProdutoModel buscarPorId(Long id) {
         return repository.findById(id).orElseThrow(() -> new RuntimeException("Não encontrado"));
     }
 
-    public void excluir(long id) {
+    public void excluir(Long id) {
         repository.deleteById(id);
     }
 }
