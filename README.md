@@ -1,0 +1,15 @@
+A configuração do banco PostgreSQL no application.proprieties é feita com o seguinte código:
+spring.application.name=catalogo
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/catalogoDB
+spring.datasource.driverClassName=org.postgresql.Driver
+spring.datasource.username=postgres
+spring.datasource.password=123456
+
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+spring.sql.init.mode=always
+
+spring.thymeleaf.cache=false
