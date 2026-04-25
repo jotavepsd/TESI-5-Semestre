@@ -1,3 +1,0 @@
-INSERT INTO TB_PRODUTO (id_produto, nome, valor) VALUES (1, 'Notebook', 2000.00);
-INSERT INTO TB_PRODUTO (id_produto, nome, valor) VALUES (2, 'Mouse', 20.00);
-INSERT INTO TB_PRODUTO (id_produto, nome, valor) VALUES (3, 'Monitor', 1150.00);

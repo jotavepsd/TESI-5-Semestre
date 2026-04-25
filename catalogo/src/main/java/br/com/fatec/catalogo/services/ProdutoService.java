@@ -1,16 +1,24 @@
 package br.com.fatec.catalogo.services;
 
+import br.com.fatec.catalogo.models.CategoriaModel;
 import br.com.fatec.catalogo.models.ProdutoModel;
+import br.com.fatec.catalogo.repositories.CategoriaRepository;
 import br.com.fatec.catalogo.repositories.ProdutoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 public class ProdutoService {
 
-    @Autowired
-    private ProdutoRepository repository;
+    private final ProdutoRepository repository;
+    private final CategoriaRepository categoriaRepository;
+
+    public ProdutoService(ProdutoRepository repository, CategoriaRepository categoriaRepository) {
+        this.repository = repository;
+        this.categoriaRepository = categoriaRepository;
+    }
 
     public List<ProdutoModel> listarTodos(String nome) {
         if (nome != null && !nome.isBlank()) {
@@ -19,26 +27,36 @@ public class ProdutoService {
         return repository.findAll();
     }
 
+    public ProdutoModel buscarPorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+    }
+
+    @Transactional
     public void salvar(ProdutoModel produto) {
-        // Busca produtos com nome similar para validar duplicidade
-        List<ProdutoModel> existentes = repository.findByNomeContainingIgnoreCase(produto.getNome());
-
-        // Se encontrar o mesmo nome em um ID diferente, bloqueia
-        boolean nomeJaExiste = existentes.stream()
-                .anyMatch(p -> p.getNome().equalsIgnoreCase(produto.getNome())
-                        && !p.getIdProduto().equals(produto.getIdProduto()));
-
-        if (nomeJaExiste) {
-            throw new IllegalArgumentException("Já existe um produto com este nome.");
+        if (produto.getCategoria() == null || produto.getCategoria().getIdCategoria() == null) {
+            throw new IllegalArgumentException("Categoria é obrigatória.");
         }
+
+        CategoriaModel categoria = categoriaRepository.findById(produto.getCategoria().getIdCategoria())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        produto.setCategoria(categoria);
+
+        repository.findByNomeIgnoreCase(produto.getNome()).ifPresent(p -> {
+            if (!p.getIdProduto().equals(produto.getIdProduto())) {
+                throw new IllegalArgumentException("Já existe um produto com este nome.");
+            }
+        });
+
         repository.save(produto);
     }
 
-    public ProdutoModel buscarPorId(Long id) {
-        return repository.findById(id).orElseThrow(() -> new RuntimeException("Não encontrado"));
-    }
-
+    @Transactional
     public void excluir(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Produto não encontrado");
+        }
         repository.deleteById(id);
     }
 }

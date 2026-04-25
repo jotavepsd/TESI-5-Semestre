@@ -2,50 +2,122 @@
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Catálogo</title>
+    <title>Catálogo de Produtos</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .header-left h1 { margin: 0; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .user-info {
+            background: #e8f4fd;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #2980b9;
+            font-weight: 500;
+            font-size: 14px;
+        }
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1; }
-        table { width: 100%; border-collapse: collapse; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #3498db; color: white; }
-        .btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; color: white; }
+        th { background: #3498db; color: white; font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .btn { padding: 8px 16px; text-decoration: none; border-radius: 4px; color: white; font-size: 14px; display: inline-block; margin: 0 2px; border: none; cursor: pointer; }
         .btn-add { background: #27ae60; }
         .btn-edit { background: #3498db; }
         .btn-del { background: #e74c3c; }
+        .btn-logout { background: #7f8c8d; }
+        .btn-search { background: #555; color: white; border: none; cursor: pointer; }
+        .empty-message { text-align: center; padding: 30px; color: #666; }
+        .category-badge {
+            background: #f0e6f6;
+            color: #8e44ad;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .nav-link.active {
+            background: #3498db;
+            color: white;
+        }
+        .nav-link.inactive {
+            background: #e0e0e0;
+            color: #666;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>Produtos</h1>
-        <a href="/produtos/novo" class="btn btn-add">Novo Produto</a>
+        <div class="header-left">
+            <h1> Catálogo de Produtos</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info" th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}">
+                 Olá, Administrador
+            </span>
+            <span class="user-info" th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
+                 Olá, Usuário
+            </span>
+            <a th:href="@{/produtos/novo}" class="btn btn-add" th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}"> Novo Produto</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-logout"> Sair</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a th:href="@{/produtos}" class="nav-link active">Produtos</a>
+        <a th:href="@{/categorias}" class="nav-link inactive"> Categorias</a>
     </div>
 
     <form th:action="@{/produtos}" method="get" class="search-box">
-        <input type="text" name="nome" th:value="${nomeFiltro}" placeholder="Filtrar por nome...">
-        <button type="submit">Buscar</button>
+        <input type="text" name="nome" th:value="${nomeFiltro}" placeholder="Filtrar por nome do produto...">
+        <button type="submit" class="btn-search">Buscar</button>
         <a th:href="@{/produtos}" style="text-decoration:none; color:#666; line-height:35px;">Limpar</a>
     </form>
 
     <table>
         <thead>
         <tr>
-            <th>Nome</th>
+            <th>Nome do Produto</th>
+            <th>Categoria</th>
             <th>Valor</th>
-            <th>Ações</th>
+            <th width="180px">Ações</th>
         </tr>
         </thead>
         <tbody>
+        <tr th:if="${produtos.empty}">
+            <td colspan="4" class="empty-message">Nenhum produto encontrado.</td>
+        </tr>
         <tr th:each="p : ${produtos}">
             <td th:text="${p.nome}"></td>
-            <td th:text="${'R$ ' + p.valor}"></td>
             <td>
-                <a th:href="@{/produtos/editar/{id}(id=${p.idProduto})}" class="btn btn-edit">Editar</a>
-                <a th:href="@{/produtos/excluir/{id}(id=${p.idProduto})}" class="btn btn-del" onclick="return confirm('Excluir?')">Remover</a>
+                <span class="category-badge" th:text="${p.categoria.nome}"></span>
+            </td>
+            <td th:text="${'R$ ' + #numbers.formatDecimal(p.valor, 1, 'COMMA', 2, 'POINT')}"></td>
+            <td>
+                <span th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}">
+                    <a th:href="@{/produtos/editar/{id}(id=${p.idProduto})}" class="btn btn-edit"> Editar</a>
+                    <a th:href="@{/produtos/excluir/{id}(id=${p.idProduto})}" class="btn btn-del" onclick="return confirm('Tem certeza que deseja excluir este produto?')">Remover</a>
+                </span>
+                <span th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}" style="color: #999;">
+                    Apenas visualização
+                </span>
             </td>
         </tr>
         </tbody>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias - Catálogo FATEC</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header-left h1 {
+            margin: 0;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info {
+            background: #e8f4fd;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #2980b9;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #8e44ad;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .btn {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            display: inline-block;
+            margin: 0 2px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-add {
+            background: #27ae60;
+        }
+        .btn-edit {
+            background: #8e44ad;
+        }
+        .btn-del {
+            background: #e74c3c;
+        }
+        .btn-logout {
+            background: #7f8c8d;
+        }
+        .btn-back {
+            background: #3498db;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc2626;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .nav-link.active {
+            background: #8e44ad;
+            color: white;
+        }
+        .nav-link.inactive {
+            background: #e0e0e0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header-left">
+            <h1> Categorias</h1>
+        </div>
+        <div class="header-right">
+            <span class="user-info" th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}">
+                 Olá, Administrador
+            </span>
+            <span class="user-info" th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
+                 Olá, Usuário
+            </span>
+            <a th:href="@{/categorias/nova}" class="btn btn-add" th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}"> Nova Categoria</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-logout"> Sair</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a th:href="@{/produtos}" class="nav-link inactive">Produtos</a>
+        <a th:href="@{/categorias}" class="nav-link active">Categorias</a>
+    </div>
+
+    <div th:if="${erro}" class="error-message" th:text="${erro}"></div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Nome da Categoria</th>
+            <th>Quantidade de Produtos</th>
+            <th width="180px">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${categorias.empty}">
+            <td colspan="3" class="empty-message">Nenhuma categoria cadastrada.</td>
+        </tr>
+        <tr th:each="c : ${categorias}">
+            <td th:text="${c.nome}"></td>
+            <td th:text="${c.produtos.size()}"></td>
+            <td>
+                <span th:if="${#authorization.expression('hasRole(''ROLE_ADMIN'')')}">
+                    <a th:href="@{/categorias/editar/{id}(id=${c.idCategoria})}" class="btn btn-edit"> Editar</a>
+                    <a th:href="@{/categorias/excluir/{id}(id=${c.idCategoria})}" class="btn btn-del" onclick="return confirm('Tem certeza que deseja excluir esta categoria?')">Remover</a>
+                </span>
+                <span th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}" style="color: #999;">
+                    Apenas visualização
+                </span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
